@@ -1,0 +1,200 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoteSecure — Online Voting System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ─── Navbar ─── -->
+<nav class="navbar">
+  <a class="logo" href="#" onclick="Auth.isLoggedIn() ? Router.go(Auth.isAdmin()?'admin':'dashboard') : Router.go('login'); return false;">
+    <div class="logo-icon">🗳</div>
+    VoteSecure
+  </a>
+  <span id="navUser"></span>
+  <div class="nav-right" id="navLinks"></div>
+</nav>
+
+<!-- ─── Login Page ─── -->
+<div id="page-login" class="page">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-hero">
+        <h1>🗳️ VoteSecure</h1>
+        <p>Secure, transparent online voting system</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Voter login</div>
+          <div class="card-sub">Sign in to access your account</div>
+        </div>
+        <div id="loginAlert"></div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" type="email" id="loginEmail" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="loginPassword" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <button class="btn btn-primary btn-full mt-2" id="loginBtn" onclick="doLogin()">Sign in →</button>
+
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text-muted);">
+          No account?
+          <a href="#" onclick="Router.go('register');return false;" style="color:var(--primary);text-decoration:none;">Register here</a>
+        </div>
+
+        <hr class="divider">
+        <div class="section-label">Demo accounts (development)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="fillDemo('voter1@demo.com','pass123')">Voter A</button>
+          <button class="btn btn-secondary btn-sm" onclick="fillDemo('voter2@demo.com','pass123')">Voter B</button>
+          <button class="btn btn-secondary btn-sm" onclick="fillDemo('admin@demo.com','admin123')">Admin</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:8px;">
+          Seed the DB first: <code style="background:var(--surface2);padding:2px 5px;border-radius:4px;">node backend/seed.js</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Register Page ─── -->
+<div id="page-register" class="page">
+  <div class="auth-wrap">
+    <div class="auth-box" style="max-width:520px;">
+      <div class="auth-hero">
+        <h1>Create account</h1>
+        <p>Register to participate in the election</p>
+      </div>
+      <div class="card">
+        <div id="regAlert"></div>
+
+        <!-- Step 1: Details -->
+        <div id="regStep1">
+          <div class="grid2">
+            <div class="form-group">
+              <label class="form-label">Full name *</label>
+              <input class="form-input" id="regName" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Aadhaar / Voter ID *</label>
+              <input class="form-input" id="regAadhaar" placeholder="1234-5678-9012">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email address *</label>
+            <input class="form-input" type="email" id="regEmail" placeholder="your@email.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile number *</label>
+            <input class="form-input" type="tel" id="regPhone" placeholder="+91 98765 43210">
+          </div>
+          <div class="grid2">
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input class="form-input" type="password" id="regPass" placeholder="Min 6 characters">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm password *</label>
+              <input class="form-input" type="password" id="regConfirm" placeholder="Repeat password">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" id="sendOtpBtn" onclick="sendOTP()">
+            Send OTP →
+          </button>
+          <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-muted);">
+            Already registered?
+            <a href="#" onclick="Router.go('login');return false;" style="color:var(--primary);text-decoration:none;">Login here</a>
+          </div>
+        </div>
+
+        <!-- Step 2: OTP -->
+        <div id="regStep2" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">Verify your phone</div>
+            <div class="card-sub">Enter the 4-digit OTP sent to your number</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Enter OTP</label>
+            <div class="otp-group">
+              <input class="otp-input" id="o1" maxlength="1" inputmode="numeric"
+                onkeyup="otpKeyup(this,'o2',null)">
+              <input class="otp-input" id="o2" maxlength="1" inputmode="numeric"
+                onkeyup="otpKeyup(this,'o3','o1')">
+              <input class="otp-input" id="o3" maxlength="1" inputmode="numeric"
+                onkeyup="otpKeyup(this,'o4','o2')">
+              <input class="otp-input" id="o4" maxlength="1" inputmode="numeric"
+                onkeyup="otpKeyup(this,null,'o3')">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" id="verifyBtn" onclick="verifyOTP()">
+            Verify & activate →
+          </button>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="backToStep1()">
+            ← Go back
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Dashboard Page ─── -->
+<div id="page-dashboard" class="page">
+  <div id="dashContent"></div>
+</div>
+
+<!-- ─── Vote Page ─── -->
+<div id="page-vote" class="page">
+  <div id="votePage"></div>
+</div>
+
+<!-- ─── Results Page ─── -->
+<div id="page-results" class="page">
+  <div id="resultsPage"></div>
+</div>
+
+<!-- ─── Admin Page ─── -->
+<div id="page-admin" class="page">
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="avatar av-2" style="width:44px;height:44px;">A</div>
+      <div>
+        <div style="font-size:17px;font-weight:700;">Admin Panel</div>
+        <div style="font-size:13px;color:var(--text-muted);">Manage candidates, voters & view system security</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-candidates" onclick="switchAdminTab('candidates')">Candidates</button>
+    <button class="tab-btn" id="tab-voters" onclick="switchAdminTab('voters')">Voters</button>
+    <button class="tab-btn" id="tab-security" onclick="switchAdminTab('security')">Security</button>
+    <button class="tab-btn" id="tab-testcases" onclick="switchAdminTab('testcases')">Test cases</button>
+  </div>
+
+  <div class="tab-panel active" id="panel-candidates">
+    <div id="candPanel"></div>
+  </div>
+  <div class="tab-panel" id="panel-voters">
+    <div id="votersPanel"></div>
+  </div>
+  <div class="tab-panel" id="panel-security">
+    <div id="securityPanel"></div>
+  </div>
+  <div class="tab-panel" id="panel-testcases">
+    <div id="testPanel"></div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
